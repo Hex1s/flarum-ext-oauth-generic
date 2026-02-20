@@ -14,6 +14,7 @@ namespace blt950\OauthGeneric\Providers;
 use Flarum\Forum\Auth\Registration;
 use Flarum\Foundation\Application;
 use FoF\OAuth\Provider;
+use Illuminate\Support\Facades\Cache;
 use League\OAuth2\Client\Provider\AbstractProvider;
 
 class Generic extends Provider
@@ -103,6 +104,12 @@ class Generic extends Provider
         $avatarUrl = $user->getAvatar();
         if ($avatarUrl !== null && $avatarUrl !== '') {
             $this->provideAvatar($registrationBuilder, $avatarUrl);
+            // Store for new-user avatar sync: when LoginProvider is created we may not have
+            // avatar_url on the user yet; use cache keyed by OAuth identifier (TTL 5 min).
+            $identifier = $user->getId();
+            if ($identifier !== null && $identifier !== '') {
+                Cache::put('blt950_oauth_avatar_' . $identifier, $avatarUrl, 300);
+            }
         }
 
         $registrationBuilder->setPayload($user->toArray());

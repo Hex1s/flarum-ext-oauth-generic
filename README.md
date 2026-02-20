@@ -56,7 +56,7 @@ To correctly find your user fields that might be nested in arrays, the parameter
 - User ID `data-id`
 - Username `data-username`
 - Email `data-personal-email`
-- Avatar URL `avatar` (optional; if set, the user's avatar from the provider is used)
+- Avatar URL `avatar` or `avatar_url` (optional; if set, the user's avatar from the provider is downloaded and saved on registration and on each login). The URL must be reachable from the Flarum server (e.g. not `localhost` when Flarum runs on another host).
 
 Forcing or suggesting fields gives you the possiblity to force or pre-fill a suggested value when signing up the user.
 
