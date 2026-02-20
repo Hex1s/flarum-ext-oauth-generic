@@ -110,10 +110,13 @@ class Generic extends Provider
             if ($identifier !== null && $identifier !== '') {
                 try {
                     Cache::put('blt950_oauth_avatar_' . $identifier, $avatarUrl, 300);
+                    \error_log('[blt950_oauth] Cached avatar for identifier=' . $identifier);
                 } catch (\Throwable $e) {
-                    // Don't break registration if cache fails
+                    \error_log('[blt950_oauth] Cache put failed: ' . $e->getMessage());
                 }
             }
+        } else {
+            \error_log('[blt950_oauth] No avatar URL from provider (id=' . ($user->getId() ?? '') . '). Set "Avatar URL Parameter" to avatar or avatar_url in admin.');
         }
 
         $registrationBuilder->setPayload($user->toArray());

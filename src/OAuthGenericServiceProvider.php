@@ -50,20 +50,24 @@ class OAuthGenericServiceProvider extends ServiceProvider
                 if ($model->provider !== 'generic') {
                     return;
                 }
+                \error_log('[blt950_oauth] LoginProvider created provider=generic identifier=' . $model->identifier);
                 try {
                     $cacheKey = 'blt950_oauth_avatar_' . $model->identifier;
                     $avatarUrl = Cache::get($cacheKey);
                     if ($avatarUrl === null || $avatarUrl === '') {
+                        \error_log('[blt950_oauth] No cached avatar for identifier=' . $model->identifier . ' (cache miss or expired)');
                         return;
                     }
                     Cache::forget($cacheKey);
                     $user = $model->user;
                     if ($user === null) {
+                        \error_log('[blt950_oauth] LoginProvider has no user relation');
                         return;
                     }
+                    \error_log('[blt950_oauth] Syncing avatar from URL for user id=' . $user->id);
                     $this->app->make(AvatarFromUrl::class)->syncFromUrl($user, $avatarUrl);
                 } catch (\Throwable $e) {
-                    // Don't break registration/login if avatar sync fails
+                    \error_log('[blt950_oauth] Avatar sync error: ' . $e->getMessage());
                 }
             }
         );

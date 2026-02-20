@@ -38,6 +38,7 @@ class AvatarFromUrl
 
     private function log(string $level, string $message): void
     {
+        \error_log('[blt950_oauth] ' . $message);
         if ($this->logger !== null) {
             if ($level === 'debug') {
                 $this->logger->debug($message);
