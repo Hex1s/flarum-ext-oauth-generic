@@ -94,8 +94,13 @@ class GenericProvider extends AbstractProvider
 
     /**
      * @var string
-    */
+     */
     private $userEmailAddress;
+
+    /**
+     * @var string
+     */
+    private $userAvatarUrl = '';
 
     /**
      * @param array $options
@@ -134,6 +139,7 @@ class GenericProvider extends AbstractProvider
             'responseResourceOwnerId',
             'scopes',
             'pkceMethod',
+            'userAvatarUrl',
         ]);
     }
 
@@ -259,6 +265,6 @@ class GenericProvider extends AbstractProvider
      */
     protected function createResourceOwner(array $response, AccessToken $token)
     {
-        return new GenericResourceOwner($response, $this->userId, $this->userDisplayName, $this->userEmailAddress);
+        return new GenericResourceOwner($response, $this->userId, $this->userDisplayName, $this->userEmailAddress, $this->userAvatarUrl);
     }
 }

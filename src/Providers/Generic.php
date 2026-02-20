@@ -50,6 +50,7 @@ class Generic extends Provider
             'id_parameter' => 'required',
             'display_name_parameter' => 'required',
             'email_address_parameter' => 'required',
+            'avatar_url_parameter' => '',
             'force_userid' => 'required|boolean',
             'force_name' => 'required|boolean',
             'force_email' => 'required|boolean',
@@ -68,6 +69,7 @@ class Generic extends Provider
             'userId' => $this->getSetting('id_parameter'),
             'userDisplayName' => $this->getSetting('display_name_parameter'),
             'userEmailAddress' => $this->getSetting('email_address_parameter'),
+            'userAvatarUrl' => $this->getSetting('avatar_url_parameter') ?? '',
             'redirectUri'  => $redirectUri,
             'userAgent'     => 'Flarum:FoF-OAuth:'.Application::VERSION.' (by /u/Background_Stress252)',
         ]);
@@ -96,6 +98,11 @@ class Generic extends Provider
             $registrationBuilder->provideTrustedEmail($user->getEmail());
         } else {
             $registrationBuilder->suggest('email', $user->getEmail());
+        }
+
+        $avatarUrl = $user->getAvatar();
+        if ($avatarUrl !== null && $avatarUrl !== '') {
+            $this->provideAvatar($registrationBuilder, $avatarUrl);
         }
 
         $registrationBuilder->setPayload($user->toArray());

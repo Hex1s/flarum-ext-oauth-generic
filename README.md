@@ -56,6 +56,7 @@ To correctly find your user fields that might be nested in arrays, the parameter
 - User ID `data-id`
 - Username `data-username`
 - Email `data-personal-email`
+- Avatar URL `avatar` (optional; if set, the user's avatar from the provider is used)
 
 Forcing or suggesting fields gives you the possiblity to force or pre-fill a suggested value when signing up the user.
 

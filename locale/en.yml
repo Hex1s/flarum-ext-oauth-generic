@@ -15,6 +15,7 @@ fof-oauth:
           id_parameter_label: User ID Parameter
           display_name_parameter_label: Display Name Parameter
           email_address_parameter_label: Email Address Parameter
+          avatar_url_parameter_label: Avatar URL Parameter (optional, e.g. avatar)
 
           force_userid_label: Force User ID (0 = no, 1 = yes)
           force_name_label: Force Display Name (0 = no, 1 = yes)

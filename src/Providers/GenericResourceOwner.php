@@ -19,16 +19,22 @@ class GenericResourceOwner implements ResourceOwnerInterface
     use ArrayAccessorTrait;
 
     /**
+     * @var string
+     */
+    private $userAvatarUrl;
+
+    /**
      * Creates new resource owner.
      *
      * @param array $response
      */
-    public function __construct(array $response, string $userId, string $userName, string $userEmail)
+    public function __construct(array $response, string $userId, string $userName, string $userEmail, string $userAvatarUrl = '')
     {
         $this->response = $response;
         $this->userId = $userId;
         $this->userName = $userName;
         $this->userEmail = $userEmail;
+        $this->userAvatarUrl = $userAvatarUrl;
     }
 
     /**
@@ -95,6 +101,19 @@ class GenericResourceOwner implements ResourceOwnerInterface
     public function getEmail()
     {
         return $this::getOAuthProperty($this->userEmail, $this->response);
+    }
+
+    /**
+     * Get resource owner avatar URL (if configured).
+     *
+     * @return string|null
+     */
+    public function getAvatar()
+    {
+        if ($this->userAvatarUrl === '') {
+            return null;
+        }
+        return $this::getOAuthProperty($this->userAvatarUrl, $this->response);
     }
 
     /**
