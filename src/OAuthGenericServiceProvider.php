@@ -7,7 +7,6 @@ use Flarum\User\AvatarUploader;
 use Flarum\User\LoginProvider;
 use FoF\OAuth\Controllers\AuthController;
 use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
 use Intervention\Image\ImageManager;
 
@@ -52,13 +51,14 @@ class OAuthGenericServiceProvider extends ServiceProvider
                 }
                 \error_log('[blt950_oauth] LoginProvider created provider=generic identifier=' . $model->identifier);
                 try {
+                    $cache = $this->app->make('cache');
                     $cacheKey = 'blt950_oauth_avatar_' . $model->identifier;
-                    $avatarUrl = Cache::get($cacheKey);
+                    $avatarUrl = $cache->get($cacheKey);
                     if ($avatarUrl === null || $avatarUrl === '') {
                         \error_log('[blt950_oauth] No cached avatar for identifier=' . $model->identifier . ' (cache miss or expired)');
                         return;
                     }
-                    Cache::forget($cacheKey);
+                    $cache->forget($cacheKey);
                     $user = $model->user;
                     if ($user === null) {
                         \error_log('[blt950_oauth] LoginProvider has no user relation');

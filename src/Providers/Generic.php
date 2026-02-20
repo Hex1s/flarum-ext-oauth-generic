@@ -14,7 +14,6 @@ namespace blt950\OauthGeneric\Providers;
 use Flarum\Forum\Auth\Registration;
 use Flarum\Foundation\Application;
 use FoF\OAuth\Provider;
-use Illuminate\Support\Facades\Cache;
 use League\OAuth2\Client\Provider\AbstractProvider;
 
 class Generic extends Provider
@@ -109,7 +108,8 @@ class Generic extends Provider
             $identifier = $user->getId();
             if ($identifier !== null && $identifier !== '') {
                 try {
-                    Cache::put('blt950_oauth_avatar_' . $identifier, $avatarUrl, 300);
+                    $cache = \Illuminate\Container\Container::getInstance()->make('cache');
+                    $cache->put('blt950_oauth_avatar_' . $identifier, $avatarUrl, 300);
                     \error_log('[blt950_oauth] Cached avatar for identifier=' . $identifier);
                 } catch (\Throwable $e) {
                     \error_log('[blt950_oauth] Cache put failed: ' . $e->getMessage());
