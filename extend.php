@@ -24,4 +24,7 @@ return [
     new Extend\Locales(__DIR__.'/locale'),
 
     (new OAuthExtend\RegisterProvider(Providers\Generic::class)),
+
+    (new Extend\ServiceProvider())
+        ->register(OAuthGenericServiceProvider::class),
 ];
