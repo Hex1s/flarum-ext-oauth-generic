@@ -9,6 +9,7 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
 use Intervention\Image\ImageManager;
+use Psr\Log\LoggerInterface;
 
 class OAuthGenericServiceProvider extends ServiceProvider
 {
@@ -27,6 +28,10 @@ class OAuthGenericServiceProvider extends ServiceProvider
         $this->app->bind(ImageManager::class, function () {
             return new ImageManager();
         });
+        // Pass logger into AvatarFromUrl when available (optional for resilience).
+        $this->app->when(AvatarFromUrl::class)->needs(LoggerInterface::class)->give(function () {
+            return $this->app->bound('log') ? $this->app->make('log') : null;
+        });
     }
 
     public function boot(): void
@@ -39,17 +44,21 @@ class OAuthGenericServiceProvider extends ServiceProvider
                 if ($model->provider !== 'generic') {
                     return;
                 }
-                $cacheKey = 'blt950_oauth_avatar_' . $model->identifier;
-                $avatarUrl = Cache::get($cacheKey);
-                if ($avatarUrl === null || $avatarUrl === '') {
-                    return;
+                try {
+                    $cacheKey = 'blt950_oauth_avatar_' . $model->identifier;
+                    $avatarUrl = Cache::get($cacheKey);
+                    if ($avatarUrl === null || $avatarUrl === '') {
+                        return;
+                    }
+                    Cache::forget($cacheKey);
+                    $user = $model->user;
+                    if ($user === null) {
+                        return;
+                    }
+                    $this->app->make(AvatarFromUrl::class)->syncFromUrl($user, $avatarUrl);
+                } catch (\Throwable $e) {
+                    // Don't break registration/login if avatar sync fails
                 }
-                Cache::forget($cacheKey);
-                $user = $model->user;
-                if ($user === null) {
-                    return;
-                }
-                $this->app->make(AvatarFromUrl::class)->syncFromUrl($user, $avatarUrl);
             }
         );
     }

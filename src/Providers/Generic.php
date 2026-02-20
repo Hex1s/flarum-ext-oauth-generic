@@ -108,7 +108,11 @@ class Generic extends Provider
             // avatar_url on the user yet; use cache keyed by OAuth identifier (TTL 5 min).
             $identifier = $user->getId();
             if ($identifier !== null && $identifier !== '') {
-                Cache::put('blt950_oauth_avatar_' . $identifier, $avatarUrl, 300);
+                try {
+                    Cache::put('blt950_oauth_avatar_' . $identifier, $avatarUrl, 300);
+                } catch (\Throwable $e) {
+                    // Don't break registration if cache fails
+                }
             }
         }
 

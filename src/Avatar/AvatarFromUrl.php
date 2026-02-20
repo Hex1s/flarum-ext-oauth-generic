@@ -21,19 +21,32 @@ class AvatarFromUrl
     protected $httpClient;
     /** @var ImageManager */
     protected $imageManager;
-    /** @var LoggerInterface */
+    /** @var LoggerInterface|null */
     protected $logger;
 
     public function __construct(
         AvatarUploader $avatarUploader,
         Client $httpClient,
         ImageManager $imageManager,
-        LoggerInterface $logger
+        ?LoggerInterface $logger = null
     ) {
         $this->avatarUploader = $avatarUploader;
         $this->httpClient = $httpClient;
         $this->imageManager = $imageManager;
         $this->logger = $logger;
+    }
+
+    private function log(string $level, string $message): void
+    {
+        if ($this->logger !== null) {
+            if ($level === 'debug') {
+                $this->logger->debug($message);
+            } elseif ($level === 'warning') {
+                $this->logger->warning($message);
+            } else {
+                $this->logger->info($message);
+            }
+        }
     }
 
     /**
@@ -42,11 +55,11 @@ class AvatarFromUrl
     public function syncFromUrl(User $user, ?string $avatarUrl): void
     {
         if ($avatarUrl === null || $avatarUrl === '') {
-            $this->logger->debug('[OAuth Generic] Avatar sync skipped: no URL for user ' . $user->id);
+            $this->log('debug', '[OAuth Generic] Avatar sync skipped: no URL for user ' . $user->id);
             return;
         }
         if (! $this->isHttpUrl($avatarUrl)) {
-            $this->logger->debug('[OAuth Generic] Avatar sync skipped: not HTTP(S) URL for user ' . $user->id);
+            $this->log('debug', '[OAuth Generic] Avatar sync skipped: not HTTP(S) URL for user ' . $user->id);
             return;
         }
 
@@ -59,19 +72,19 @@ class AvatarFromUrl
                 ],
             ]);
         } catch (RequestException $e) {
-            $this->logger->warning('[OAuth Generic] Avatar download failed for user ' . $user->id . ': ' . $e->getMessage());
+            $this->log('warning', '[OAuth Generic] Avatar download failed for user ' . $user->id . ': ' . $e->getMessage());
             return;
         }
 
         $body = (string) $response->getBody();
         if ($body === '') {
-            $this->logger->debug('[OAuth Generic] Avatar sync skipped: empty response for user ' . $user->id);
+            $this->log('debug', '[OAuth Generic] Avatar sync skipped: empty response for user ' . $user->id);
             return;
         }
 
         $contentType = $response->getHeaderLine('Content-Type');
         if (! $this->isImageContentType($contentType)) {
-            $this->logger->debug('[OAuth Generic] Avatar sync skipped: unsupported Content-Type ' . $contentType . ' for user ' . $user->id);
+            $this->log('debug', '[OAuth Generic] Avatar sync skipped: unsupported Content-Type ' . $contentType . ' for user ' . $user->id);
             return;
         }
 
@@ -79,9 +92,9 @@ class AvatarFromUrl
             $image = $this->imageManager->make($body);
             $this->avatarUploader->upload($user, $image);
             $user->save();
-            $this->logger->info('[OAuth Generic] Avatar synced from URL for user ' . $user->id);
+            $this->log('info', '[OAuth Generic] Avatar synced from URL for user ' . $user->id);
         } catch (\Throwable $e) {
-            $this->logger->warning('[OAuth Generic] Avatar upload failed for user ' . $user->id . ': ' . $e->getMessage());
+            $this->log('warning', '[OAuth Generic] Avatar upload failed for user ' . $user->id . ': ' . $e->getMessage());
         }
     }
 
