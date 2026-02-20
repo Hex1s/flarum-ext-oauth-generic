@@ -3,13 +3,13 @@
 namespace blt950\OauthGeneric;
 
 use blt950\OauthGeneric\Avatar\AvatarFromUrl;
+use Flarum\User\AvatarUploader;
 use Flarum\User\LoginProvider;
 use FoF\OAuth\Controllers\AuthController;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\ServiceProvider;
 use Intervention\Image\ImageManager;
-use Psr\Log\LoggerInterface;
 
 class OAuthGenericServiceProvider extends ServiceProvider
 {
@@ -21,16 +21,22 @@ class OAuthGenericServiceProvider extends ServiceProvider
             Controllers\GenericAuthController::class
         );
 
-        // Avatar sync from URL: ensure HTTP client and Image manager are available for AvatarFromUrl.
+        // Avatar sync from URL: bind dependencies and AvatarFromUrl explicitly to avoid
+        // deep/circular resolution that can exhaust memory in Container.
         $this->app->bind(Client::class, function () {
             return new Client();
         });
         $this->app->bind(ImageManager::class, function () {
             return new ImageManager();
         });
-        // Pass logger into AvatarFromUrl when available (optional for resilience).
-        $this->app->when(AvatarFromUrl::class)->needs(LoggerInterface::class)->give(function () {
-            return $this->app->bound('log') ? $this->app->make('log') : null;
+        $this->app->bind(AvatarFromUrl::class, function ($app) {
+            $logger = $app->bound('log') ? $app->make('log') : null;
+            return new AvatarFromUrl(
+                $app->make(AvatarUploader::class),
+                $app->make(Client::class),
+                $app->make(ImageManager::class),
+                $logger
+            );
         });
     }
 
