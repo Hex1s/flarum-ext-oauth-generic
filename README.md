@@ -4,6 +4,8 @@
 
 A [Flarum](http://flarum.org) extension. Generic oauth provider for Flarum
 
+**This fork:** Uses Display Name (not User ID) for the signup form username field, and shows "Log in with UNRIP" by default. Same package name as original — install from this repo when using with UNRIP.
+
 ![](https://extiverse.com/extension/blt950/oauth-generic/open-graph-image)
 
 ## Features
@@ -12,7 +14,28 @@ Adds a `Generic` provider to [FoF OAuth](https://github.com/FriendsOfFlarum/oaut
 
 ## Installation
 
-Install with composer:
+### From this fork (UNRIP / production)
+
+1. In the Flarum container (or where you run Composer for Flarum):
+
+```sh
+# If you had the original, remove it first:
+composer remove blt950/oauth-generic
+
+# Add your fork (replace YOUR_USER/YOUR_REPO with your GitHub fork):
+composer config repositories.oauth-unrip vcs https://github.com/YOUR_USER/YOUR_REPO.git
+
+# Install from fork (same package name):
+composer require blt950/oauth-generic:dev-main
+
+php flarum extension:enable blt950-oauth-generic
+php flarum migrate
+php flarum cache:clear
+```
+
+2. For Docker: persist `vendor` or run the above in build/entrypoint so the fork is used after deploy.
+
+### From Packagist (original)
 
 ```sh
 composer require blt950/oauth-generic

@@ -22,11 +22,11 @@ fof-oauth:
 
   forum:
     log_in:
-      with_generic_button: '=> fof-oauth.forum.log_in.with_button'
+      with_generic_button: Log in with UNRIP
 
     providers:
       generic: '=> fof-oauth.lib.providers.generic'
 
   lib:
     providers:
-      generic: Generic
+      generic: UNRIP

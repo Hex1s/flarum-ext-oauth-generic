@@ -79,10 +79,11 @@ class Generic extends Provider
 
         $registrationBuilder = $registration;
 
+        // Username from Display Name (e.g. login), so form shows readable name, not provider id
         if($this->getSetting('force_userid')) {
-            $registrationBuilder->provide('username', $user->getId());
+            $registrationBuilder->provide('username', $user->getName());
         } else {
-            $registrationBuilder->suggest('username', $user->getId());
+            $registrationBuilder->suggest('username', $user->getName());
         }
 
         if($this->getSetting('force_name')) {
