@@ -12,6 +12,8 @@
 namespace blt950\OauthGeneric;
 
 use Flarum\Extend;
+use Flarum\User\Event\Registered as UserRegistered;
+use FoF\Extend\Events\OAuthLoginSuccessful;
 use FoF\OAuth\Extend as OAuthExtend;
 
 return [
@@ -27,4 +29,8 @@ return [
 
     (new Extend\ServiceProvider())
         ->register(OAuthGenericServiceProvider::class),
+
+    (new Extend\Event())
+        ->listen(OAuthLoginSuccessful::class, [Listeners\SyncOAuthAvatarListener::class, 'onOAuthLoginSuccessful'])
+        ->listen(UserRegistered::class, [Listeners\SyncOAuthAvatarListener::class, 'onUserRegistered']),
 ];

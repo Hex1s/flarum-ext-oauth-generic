@@ -74,13 +74,14 @@ class GenericResourceOwner implements ResourceOwnerInterface
     }
 
     /**
-     * Get resource owner id.
+     * Get resource owner id. Always string so Flarum LoginProvider lookup matches (DB identifier is string).
      *
      * @return string|null
      */
     public function getId()
     {
-        return $this::getOAuthProperty($this->userId, $this->response);
+        $value = $this::getOAuthProperty($this->userId, $this->response);
+        return $value !== null && $value !== '' ? (string) $value : null;
     }
 
     /**
