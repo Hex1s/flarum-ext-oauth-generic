@@ -27,20 +27,24 @@ class SyncOAuthAvatarListener
             return;
         }
 
-        $loginProvider = LoginProvider::where('provider', $event->providerName)
-            ->where('identifier', $event->identifier)
-            ->first();
+        try {
+            $loginProvider = LoginProvider::where('provider', $event->providerName)
+                ->where('identifier', $event->identifier)
+                ->first();
 
-        if (! $loginProvider || ! $loginProvider->user) {
-            return;
+            if (! $loginProvider || ! $loginProvider->user) {
+                return;
+            }
+
+            $avatarUrl = null;
+            if (method_exists($event->userResource, 'getAvatar')) {
+                $avatarUrl = $event->userResource->getAvatar();
+            }
+
+            $this->avatarFromUrl->syncFromUrl($loginProvider->user, $avatarUrl);
+        } catch (\Throwable $e) {
+            \error_log('[blt950_oauth] SyncOAuthAvatarListener onOAuthLoginSuccessful: ' . $e->getMessage());
         }
-
-        $avatarUrl = null;
-        if (method_exists($event->userResource, 'getAvatar')) {
-            $avatarUrl = $event->userResource->getAvatar();
-        }
-
-        $this->avatarFromUrl->syncFromUrl($loginProvider->user, $avatarUrl);
     }
 
     /**

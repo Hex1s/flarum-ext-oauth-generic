@@ -95,7 +95,9 @@ class AvatarFromUrl
             $user->save();
             $this->log('info', '[OAuth Generic] Avatar synced from URL for user ' . $user->id);
         } catch (\Throwable $e) {
-            $this->log('warning', '[OAuth Generic] Avatar upload failed for user ' . $user->id . ': ' . $e->getMessage());
+            // Use error_log only: Flarum's logger may write to the same file and throw (e.g. permission denied),
+            // which would cause a second uncaught exception and HTTP 500.
+            \error_log('[blt950_oauth] Avatar upload failed for user ' . $user->id . ': ' . $e->getMessage());
         }
     }
 
