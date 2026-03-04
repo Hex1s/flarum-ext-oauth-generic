@@ -29,56 +29,41 @@ app.initializers.add('blt950/oauth-generic-forum', () => {
       display: none !important;
     }
     
-    /* Скрываем автора в дискуссиях проектов и голосований */
-    .DiscussionListItem[data-tags*="project-"] .DiscussionListItem-author,
-    .DiscussionListItem[data-tags*="vote-"] .DiscussionListItem-author {
+    /* Скрываем автора в списке дискуссий для проектов/голосований */
+    .DiscussionListItem .DiscussionListItem-author[href="/u/service-user"] {
       display: none !important;
     }
     
-    /* Скрываем аватар и имя автора в первом посте дискуссий проектов/голосований */
-    .DiscussionPage[data-tags*="project-"] .PostUser,
-    .DiscussionPage[data-tags*="vote-"] .PostUser {
+    /* Скрываем PostUser в первом посте дискуссий */
+    .PostStream-item[data-index="0"] .PostUser {
       display: none !important;
     }
     
-    /* Убираем отступ слева от контента, когда скрыт автор */
-    .DiscussionPage[data-tags*="project-"] .Post-body,
-    .DiscussionPage[data-tags*="vote-"] .Post-body {
-      margin-left: 0 !important;
-    }
-    
-    /* Скрываем метаинформацию о времени создания поста (опционально) */
-    .DiscussionPage[data-tags*="project-"] .Post:first-child .PostMeta,
-    .DiscussionPage[data-tags*="vote-"] .Post:first-child .PostMeta {
-      display: none !important;
-    }
-    
-    /* Альтернативный подход - скрываем весь блок пользователя в первом посте */
-    .DiscussionPage[data-tags*="project-"] .Post:first-child .Post-user,
-    .DiscussionPage[data-tags*="vote-"] .Post:first-child .Post-user {
+    /* Скрываем Post-header полностью для первого поста */
+    .PostStream-item[data-index="0"] .Post-header {
       display: none !important;
     }
     
     /* Стилизуем первый пост как системное сообщение */
-    .DiscussionPage[data-tags*="project-"] .Post:first-child,
-    .DiscussionPage[data-tags*="vote-"] .Post:first-child {
+    .PostStream-item[data-index="0"] .Post {
       background-color: #f8f9fa !important;
       border-left: 4px solid #4e73df !important;
       padding: 15px !important;
       margin-bottom: 20px !important;
+      border-radius: 8px !important;
     }
     
-    /* Добавляем иконку проекта/голосования */
-    .DiscussionPage[data-tags*="project-"] .Post:first-child .Post-body::before {
+    /* Добавляем иконку в первый пост */
+    .PostStream-item[data-index="0"] .Post-body::before {
       content: "🚀 ";
       font-size: 16px;
       margin-right: 8px;
+      font-weight: bold;
     }
     
-    .DiscussionPage[data-tags*="vote-"] .Post:first-child .Post-body::before {
+    /* Специальные стили для голосований */
+    body:has(.TagLabel-name:contains("vote-")) .PostStream-item[data-index="0"] .Post-body::before {
       content: "🗳️ ";
-      font-size: 16px;
-      margin-right: 8px;
     }
   `;
   document.head.appendChild(style);
@@ -87,49 +72,70 @@ app.initializers.add('blt950/oauth-generic-forum', () => {
   
   // Дополнительная JavaScript логика для скрытия авторов
   function hideProjectAuthors() {
-    // Скрываем авторов в списке дискуссий
+    // Скрываем авторов в списке дискуссий для проектов/голосований
     document.querySelectorAll('.DiscussionListItem').forEach(item => {
-      const titleElement = item.querySelector('.DiscussionListItem-title');
-      if (titleElement) {
-        const href = titleElement.getAttribute('href') || '';
-        // Проверяем, содержит ли URL теги проектов или голосований
-        if (href.includes('/d/') && (
-          item.textContent?.includes('Project:') || 
-          item.textContent?.includes('Vote:') ||
-          item.querySelector('[data-tag-slug*="project-"]') ||
-          item.querySelector('[data-tag-slug*="vote-"]')
-        )) {
-          const authorElement = item.querySelector('.DiscussionListItem-author');
-          if (authorElement) {
-            authorElement.style.display = 'none';
-          }
+      // Ищем теги проектов или голосований
+      const tags = item.querySelectorAll('.TagLabel-name');
+      const hasProjectOrVoteTag = Array.from(tags).some(tag => {
+        const tagText = tag.textContent || '';
+        return tagText.includes('Project:') || tagText.includes('pillars') || tagText.includes('vote-');
+      });
+      
+      if (hasProjectOrVoteTag) {
+        const authorElement = item.querySelector('.DiscussionListItem-author');
+        if (authorElement) {
+          console.log('🔧 Hiding author in discussion list:', item.querySelector('.DiscussionListItem-title')?.textContent);
+          authorElement.style.display = 'none';
         }
       }
     });
     
     // Скрываем автора в первом посте дискуссии
-    const firstPost = document.querySelector('.Post:first-child');
-    if (firstPost && window.location.pathname.includes('/d/')) {
+    const firstPostItem = document.querySelector('.PostStream-item[data-index="0"]');
+    if (firstPostItem) {
       // Проверяем теги дискуссии
-      const tags = document.querySelectorAll('.DiscussionPage-tags .TagLabel');
-      const hasProjectTag = Array.from(tags).some(tag => 
-        tag.textContent?.includes('Project:') || 
-        tag.textContent?.includes('project-') ||
-        tag.textContent?.includes('Vote:') ||
-        tag.textContent?.includes('vote-')
-      );
+      const tags = document.querySelectorAll('.TagLabel-name');
+      const hasProjectTag = Array.from(tags).some(tag => {
+        const tagText = tag.textContent || '';
+        return tagText.includes('Project:') || tagText.includes('pillars') || tagText.includes('vote-');
+      });
       
       if (hasProjectTag) {
-        const userElement = firstPost.querySelector('.Post-user');
-        const postUser = firstPost.querySelector('.PostUser');
-        if (userElement) userElement.style.display = 'none';
-        if (postUser) postUser.style.display = 'none';
+        console.log('🔧 Hiding author in first post');
         
-        // Добавляем системный стиль
-        firstPost.style.backgroundColor = '#f8f9fa';
-        firstPost.style.borderLeft = '4px solid #4e73df';
-        firstPost.style.padding = '15px';
-        firstPost.style.marginBottom = '20px';
+        // Скрываем весь header первого поста
+        const postHeader = firstPostItem.querySelector('.Post-header');
+        if (postHeader) {
+          postHeader.style.display = 'none';
+        }
+        
+        // Стилизуем пост как системное сообщение
+        const post = firstPostItem.querySelector('.Post');
+        if (post) {
+          post.style.backgroundColor = '#f8f9fa';
+          post.style.borderLeft = '4px solid #4e73df';
+          post.style.padding = '15px';
+          post.style.marginBottom = '20px';
+          post.style.borderRadius = '8px';
+        }
+        
+        // Добавляем иконку
+        const postBody = firstPostItem.querySelector('.Post-body');
+        if (postBody && !postBody.querySelector('.unrip-icon')) {
+          const icon = document.createElement('span');
+          icon.className = 'unrip-icon';
+          icon.style.fontSize = '16px';
+          icon.style.marginRight = '8px';
+          icon.style.fontWeight = 'bold';
+          
+          // Определяем тип по тегам
+          const isVoting = Array.from(tags).some(tag => 
+            (tag.textContent || '').includes('vote-') || (tag.textContent || '').includes('Vote:')
+          );
+          icon.textContent = isVoting ? '🗳️ ' : '🚀 ';
+          
+          postBody.insertBefore(icon, postBody.firstChild);
+        }
       }
     }
   }
