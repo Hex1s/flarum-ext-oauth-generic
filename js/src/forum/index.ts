@@ -29,6 +29,11 @@ app.initializers.add('blt950/oauth-generic-forum', () => {
       display: none !important;
     }
     
+    /* Убираем отступ слева в списке дискуссий когда скрыт автор */
+    .DiscussionListItem-content {
+      padding-left: 0 !important;
+    }
+    
     /* Скрываем автора в списке дискуссий для проектов/голосований */
     .DiscussionListItem .DiscussionListItem-author[href="/u/service-user"] {
       display: none !important;
@@ -42,28 +47,6 @@ app.initializers.add('blt950/oauth-generic-forum', () => {
     /* Скрываем Post-header полностью для первого поста */
     .PostStream-item[data-index="0"] .Post-header {
       display: none !important;
-    }
-    
-    /* Стилизуем первый пост как системное сообщение */
-    .PostStream-item[data-index="0"] .Post {
-      background-color: #f8f9fa !important;
-      border-left: 4px solid #4e73df !important;
-      padding: 15px !important;
-      margin-bottom: 20px !important;
-      border-radius: 8px !important;
-    }
-    
-    /* Добавляем иконку в первый пост */
-    .PostStream-item[data-index="0"] .Post-body::before {
-      content: "🚀 ";
-      font-size: 16px;
-      margin-right: 8px;
-      font-weight: bold;
-    }
-    
-    /* Специальные стили для голосований */
-    body:has(.TagLabel-name:contains("vote-")) .PostStream-item[data-index="0"] .Post-body::before {
-      content: "🗳️ ";
     }
   `;
   document.head.appendChild(style);
@@ -109,15 +92,7 @@ app.initializers.add('blt950/oauth-generic-forum', () => {
           postHeader.style.display = 'none';
         }
         
-        // Стилизуем пост как системное сообщение
-        const post = firstPostItem.querySelector('.Post');
-        if (post) {
-          post.style.backgroundColor = '#f8f9fa';
-          post.style.borderLeft = '4px solid #4e73df';
-          post.style.padding = '15px';
-          post.style.marginBottom = '20px';
-          post.style.borderRadius = '8px';
-        }
+        // Убираем стилизацию поста - оставляем как обычный пост
         
         // Добавляем иконку
         const postBody = firstPostItem.querySelector('.Post-body');
