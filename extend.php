@@ -18,6 +18,7 @@ use FoF\OAuth\Extend as OAuthExtend;
 
 return [
     (new Extend\Frontend('forum'))
+        ->js(__DIR__.'/js/dist/forum.js')
         ->css(__DIR__.'/less/forum.less'),
 
     (new Extend\Frontend('admin'))
@@ -29,6 +30,11 @@ return [
 
     (new Extend\ServiceProvider())
         ->register(OAuthGenericServiceProvider::class),
+
+    // API роуты для создания контента от лица пользователей
+    (new Extend\Routes('api'))
+        ->post('/unrip/create-project', 'unrip.create-project', Controllers\CreateProjectController::class)
+        ->post('/unrip/create-voting', 'unrip.create-voting', Controllers\CreateVotingController::class),
 
     (new Extend\Event())
         ->listen(OAuthLoginSuccessful::class, [Listeners\SyncOAuthAvatarListener::class, 'onOAuthLoginSuccessful'])
