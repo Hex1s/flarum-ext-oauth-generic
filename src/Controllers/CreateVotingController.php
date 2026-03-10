@@ -60,6 +60,21 @@ class CreateVotingController extends AbstractCreateController
         return substr($title, 0, $max);
     }
 
+    private function startDiscussionCompat(User $actor, array $payload, ServerRequestInterface $request): Discussion
+    {
+        // Flarum core changed StartDiscussion constructor between versions (2 args -> 3 args with IP).
+        $ref = new \ReflectionClass(StartDiscussion::class);
+        $ctor = $ref->getConstructor();
+        $required = $ctor ? $ctor->getNumberOfRequiredParameters() : 2;
+
+        if ($required >= 3) {
+            $ipAddress = Arr::get($request->getServerParams(), 'REMOTE_ADDR');
+            return $this->bus->dispatch(new StartDiscussion($actor, $payload, $ipAddress));
+        }
+
+        return $this->bus->dispatch(new StartDiscussion($actor, $payload));
+    }
+
     protected function data(ServerRequestInterface $request, Document $document)
     {
         $actor = RequestUtil::getActor($request);
@@ -120,13 +135,11 @@ class CreateVotingController extends AbstractCreateController
 
             // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
             // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
-            $discussion = $this->bus->dispatch(
-                new StartDiscussion($actor, [
-                    'title' => $title,
-                    'content' => $content,
-                    'tags' => [$projectTag->id, $votingTag->id]
-                ])
-            );
+            $discussion = $this->startDiscussionCompat($actor, [
+                'title' => $title,
+                'content' => $content,
+                'tags' => [$projectTag->id, $votingTag->id]
+            ], $request);
 
             try {
                 $discussion->user_id = $flarumUser->id;
