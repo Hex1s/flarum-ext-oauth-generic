@@ -75,6 +75,15 @@ class CreateVotingController extends AbstractCreateController
         return $this->bus->dispatch(new StartDiscussion($actor, $payload));
     }
 
+    private function tagsRelationship(array $tagIds): array
+    {
+        $data = [];
+        foreach ($tagIds as $id) {
+            $data[] = ['type' => 'tags', 'id' => (string) $id];
+        }
+        return ['tags' => ['data' => $data]];
+    }
+
     protected function data(ServerRequestInterface $request, Document $document)
     {
         $actor = RequestUtil::getActor($request);
@@ -133,13 +142,21 @@ class CreateVotingController extends AbstractCreateController
 
             $title = $this->truncateTitle((string) $data['voting_title'], 80);
 
-            // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
-            // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
-            $discussion = $this->startDiscussionCompat($actor, [
+            $tagIds = [$projectTag->id, $votingTag->id];
+            $payload = [
                 'title' => $title,
                 'content' => $content,
-                'tags' => [$projectTag->id, $votingTag->id]
-            ], $request);
+                'tags' => $tagIds,
+                'attributes' => [
+                    'title' => $title,
+                    'content' => $content,
+                ],
+                'relationships' => $this->tagsRelationship($tagIds),
+            ];
+
+            // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
+            // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
+            $discussion = $this->startDiscussionCompat($actor, $payload, $request);
 
             try {
                 $discussion->user_id = $flarumUser->id;

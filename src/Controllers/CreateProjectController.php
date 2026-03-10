@@ -76,6 +76,15 @@ class CreateProjectController extends AbstractCreateController
         return $this->bus->dispatch(new StartDiscussion($actor, $payload));
     }
 
+    private function tagsRelationship(array $tagIds): array
+    {
+        $data = [];
+        foreach ($tagIds as $id) {
+            $data[] = ['type' => 'tags', 'id' => (string) $id];
+        }
+        return ['tags' => ['data' => $data]];
+    }
+
     protected function data(ServerRequestInterface $request, Document $document)
     {
         $actor = RequestUtil::getActor($request);
@@ -119,13 +128,24 @@ class CreateProjectController extends AbstractCreateController
                 ? (string) $data['project_description']
                 : 'Project discussion created from UNRIP';
 
-            // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
-            // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
-            $discussion = $this->startDiscussionCompat($actor, [
+            $tagIds = [$tag->id];
+            // Support multiple Flarum core versions:
+            // - some expect data in JSON:API-ish shape: attributes.title/content + relationships.tags
+            // - older forks may accept title/content/tags at top-level
+            $payload = [
                 'title' => $title,
                 'content' => $content,
-                'tags' => [$tag->id]
-            ], $request);
+                'tags' => $tagIds,
+                'attributes' => [
+                    'title' => $title,
+                    'content' => $content,
+                ],
+                'relationships' => $this->tagsRelationship($tagIds),
+            ];
+
+            // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
+            // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
+            $discussion = $this->startDiscussionCompat($actor, $payload, $request);
 
             try {
                 $discussion->user_id = $flarumUser->id;
