@@ -104,14 +104,29 @@ class CreateProjectController extends AbstractCreateController
                 ? (string) $data['project_description']
                 : 'Project discussion created from UNRIP';
 
-            // Создаем дискуссию от лица пользователя
+            // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
+            // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
             $discussion = $this->bus->dispatch(
-                new StartDiscussion($flarumUser, [
+                new StartDiscussion($actor, [
                     'title' => $title,
                     'content' => $content,
                     'tags' => [$tag->id]
                 ])
             );
+
+            try {
+                $discussion->user_id = $flarumUser->id;
+                $discussion->save();
+
+                // Также меняем автора первого поста (иначе в UI может остаться service user).
+                $firstPost = $discussion->firstPost;
+                if ($firstPost) {
+                    $firstPost->user_id = $flarumUser->id;
+                    $firstPost->save();
+                }
+            } catch (\Throwable $e) {
+                \error_log('[unrip.create-project][reassign] ' . $e->getMessage());
+            }
 
             return $discussion;
         } catch (\Throwable $e) {

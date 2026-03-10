@@ -118,14 +118,28 @@ class CreateVotingController extends AbstractCreateController
 
             $title = $this->truncateTitle((string) $data['voting_title'], 80);
 
-            // Создаем дискуссию от лица пользователя
+            // Создаем дискуссию от лица service user (actor), чтобы не зависеть от прав целевого пользователя.
+            // Затем перепривязываем автора дискуссии/первого поста на нужного пользователя.
             $discussion = $this->bus->dispatch(
-                new StartDiscussion($flarumUser, [
+                new StartDiscussion($actor, [
                     'title' => $title,
                     'content' => $content,
                     'tags' => [$projectTag->id, $votingTag->id]
                 ])
             );
+
+            try {
+                $discussion->user_id = $flarumUser->id;
+                $discussion->save();
+
+                $firstPost = $discussion->firstPost;
+                if ($firstPost) {
+                    $firstPost->user_id = $flarumUser->id;
+                    $firstPost->save();
+                }
+            } catch (\Throwable $e) {
+                \error_log('[unrip.create-voting][reassign] ' . $e->getMessage());
+            }
 
             return $discussion;
         } catch (\Throwable $e) {
